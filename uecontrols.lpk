@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <Package Version="4">
+    <Name Value="uEControls"/>
+    <AddToProjectUsesSection Value="True"/>
+    <Author Value="Miguel A. Risco Castillo"/>
+    <CompilerOptions>
+      <Version Value="11"/>
+      <SearchPaths>
+        <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
+      </SearchPaths>
+      <Parsing>
+        <SyntaxOptions>
+          <UseAnsiStrings Value="False"/>
+        </SyntaxOptions>
+      </Parsing>
+      <Linking>
+        <Debugging>
+          <GenerateDebugInfo Value="False"/>
+        </Debugging>
+      </Linking>
+      <Other>
+        <CompilerPath Value="$(CompPath)"/>
+      </Other>
+    </CompilerOptions>
+    <Description Value="Set of instrumentation controls for Lazarus IDE"/>
+    <License Value="  The contents of this file are subject to the Mozilla Public License
+  Version 1.1 (the &quot;License&quot;); you may not use this file except in compliance
+  with the License. You may obtain a copy of the License at
+  http://www.mozilla.org/MPL/MPL-1.1.html
+
+  Software distributed under the License is distributed on an &quot;AS IS&quot; basis,
+  WITHOUT WARRANTY OF ANY KIND, either expressed or implied. See the License for
+  the specific language governing rights and limitations under the License."/>
+    <Version Minor="5" Release="14" Build="253"/>
+    <Files Count="5">
+      <Item1>
+        <Filename Value="uerotimage.pas"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="uERotImage"/>
+      </Item1>
+      <Item2>
+        <Filename Value="ueled.pas"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="ueled"/>
+      </Item2>
+      <Item3>
+        <Filename Value="ueknob.pas"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="uEKnob"/>
+      </Item3>
+      <Item4>
+        <Filename Value="ueselector.pas"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="uESelector"/>
+      </Item4>
+      <Item5>
+        <Filename Value="uemultiturn.pas"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="uEMultiTurn"/>
+      </Item5>
+    </Files>
+    <Type Value="RunAndDesignTime"/>
+    <RequiredPkgs Count="3">
+      <Item1>
+        <PackageName Value="BGRABitmapPack"/>
+      </Item1>
+      <Item2>
+        <PackageName Value="LCL"/>
+        <MinVersion Major="1" Valid="True"/>
+      </Item2>
+      <Item3>
+        <PackageName Value="FCL"/>
+        <MinVersion Major="1" Valid="True"/>
+      </Item3>
+    </RequiredPkgs>
+    <UsageOptions>
+      <CustomOptions Value="-dUseCThreads"/>
+      <UnitPath Value="$(PkgOutDir)"/>
+    </UsageOptions>
+    <PublishOptions>
+      <Version Value="2"/>
+      <IgnoreBinaries Value="False"/>
+    </PublishOptions>
+    <CustomOptions Items="ExternHelp" Version="2">
+      <_ExternHelp Items="Count"/>
+    </CustomOptions>
+  </Package>
+</CONFIG>
