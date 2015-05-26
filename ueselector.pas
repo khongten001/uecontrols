@@ -1,15 +1,24 @@
 {-----------------------------------------------------------------------------
-Miguel A. Risco Castillo TuESelector v0.3.3
-http://ue.accesus.com/uecontrols
+  TuESelector v1.0 2015-05-17
+  Author: Miguel A. Risco Castillo
+  http://ue.accesus.com/uecontrols
 
-The contents of this file are subject to the Mozilla Public License
-Version 1.1 (the "License"); you may not use this file except in compliance
-with the License. You may obtain a copy of the License at
-http://www.mozilla.org/MPL/MPL-1.1.html
+  This software may not be included into library collections and similar compilations
+  which are sold. If you want to distribute this code for money then contact me
+  first and ask for my permission.
 
-Software distributed under the License is distributed on an "AS IS" basis,
-WITHOUT WARRANTY OF ANY KIND, either expressed or implied. See the License for
-the specific language governing rights and limitations under the License.
+  These copyright notices in the source code may not be removed or modified.
+  If you modify and/or distribute the code to any third party then you must not
+  veil the original author. It must always be clearly identifiable.
+
+  The contents of this file are subject to the Mozilla Public License
+  Version 1.1 (the "License"); you may not use this file except in compliance
+  with the License. You may obtain a copy of the License at
+  http://www.mozilla.org/MPL/MPL-1.1.html
+
+  Software distributed under the License is distributed on an "AS IS" basis,
+  WITHOUT WARRANTY OF ANY KIND, either expressed or implied. See the License for
+  the specific language governing rights and limitations under the License.
 -----------------------------------------------------------------------------}
 
 unit uESelector;
@@ -21,7 +30,7 @@ interface
 uses
   Classes, SysUtils, LResources, Forms, Controls, Graphics, Dialogs, ExtCtrls,
   LCLIntf, LCLType, LCLProc, Types,
-  BGRABitmap, BGRABitmapTypes, uEKnob;
+  BGRABitmap, BGRABitmapTypes, uEBase, uEKnob;
 
 type
   { TCustomuESelector }
@@ -32,33 +41,41 @@ type
     procedure SetIndex(const AValue: Integer);
     procedure SetItems(const AValue: TStringList);
   protected
+    procedure SetupDefaults;override;
     procedure ItemsChanged(Sender:TObject); virtual;
-    procedure DefaultPicture; override;
     procedure ForcePosition(const AValue: Real); override;
     property Index: Integer read FIndex write SetIndex;
     property Items: TStringList read FItems write SetItems;
+    procedure DrawScales(LBitmap:TBGRABitmap); override;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-    procedure DrawScales(LBitmap:TBGRABitmap); override;
+    procedure DefaultPicture(r:integer); override;
   end;
 
 
   TuESelector = class(TCustomuESelector)
   published
+    property About;
+    property Debug;
+//  This property is deprecated, use Image and LoadfromFile
+    property Picture;
     property MaxAngle;
     property MinAngle;
     property OffsetAngle;
-    property Picture;
+    property Image;
+    property BackImage;
     property Index;
     property Items;
     property LTicksSize;
     property LTicksColor;
+    property LTicksWidth;
     property TicksMargin;
     property ShowValues;
     property ValuesMargin;
     property ValuesFont;
     property Transparent;
+    property DefKnobRadius;
     property OnChange;
     property OnPaint;
     property OnMouseDown;
@@ -95,7 +112,6 @@ type
     property OnResize;
     property OnStartDock;
     property OnStartDrag;
-
   end;
 
 
@@ -116,25 +132,31 @@ begin
   if AValue.Count>2 then FItems.Assign(AValue);
 end;
 
-procedure TCustomuESelector.DefaultPicture;
+procedure TCustomuESelector.SetupDefaults;
+begin
+  inherited SetupDefaults;
+  FMax:=6;
+  FMin:=0;
+  FValuesMargin:=10;
+  FLTicksSize:=5;
+end;
+
+procedure TCustomuESelector.DefaultPicture(r:integer);
 var
-  TBmp: TBGRABitmap;
   c:real;
 begin
-  c:=(DefKnobRadius-1)/2;
-  tbmp :=TBGRABitmap.Create(DefKnobRadius,DefKnobRadius,BGRAPixelTransparent);
-  tbmp.FillEllipseAntialias(c,c,c,c,BGRABlack);
-  tbmp.GradientFill(0,0,DefKnobRadius,DefKnobRadius,
+  if r<=0 then exit;
+  c:=(r-1)/2;
+  Bitmap.SetSize(r,r);
+  Bitmap.Fill(BGRAPixelTransparent);
+  Bitmap.FillEllipseAntialias(c,c,c,c,BGRABlack);
+  Bitmap.GradientFill(0,0,r,r,
                       BGRA(128,128,128,255),BGRA(0,0,0,0),
                       gtRadial,PointF(c,c),PointF(0,c),
                       dmDrawWithTransparency);
-  tbmp.FillRectAntialias(c-5,0,c+5,DefKnobRadius,BGRABlack);
-  tbmp.DrawLineAntialias(c,c+5,c,DefKnobRadius-5,BGRAWhite,2);
-  try
-    Picture.Bitmap.Assign(tbmp.Bitmap);
-  finally
-    tbmp.Free;
-  end;
+  Bitmap.FillRectAntialias(c-5,0,c+5,r,BGRABlack);
+  Bitmap.DrawLineAntialias(c,c+5,c,r-5,BGRAWhite,2);
+  AssignBGRAtoImage(Bitmap,Image);
 end;
 
 procedure TCustomuESelector.ItemsChanged(Sender: TObject);
@@ -142,7 +164,6 @@ begin
   FLTicks:=FItems.Count;
   FMax:=FItems.Count-1;
   ForcePosition(FIndex);
-  UpdateScales;
   invalidate;
 end;
 
@@ -157,10 +178,6 @@ begin
   FItems.Add('S6=60');
   FItems.Add('S7=70');
   inherited Create(AOwner);
-  FMax:=6;
-  FMin:=0;
-  FValuesMargin:=10;
-  FLTicksSize:=5;
   FIndex:=0;
   FItems.OnChange := @ItemsChanged;
 end;
@@ -168,7 +185,7 @@ end;
 destructor TCustomuESelector.Destroy;
 begin
   FItems.OnChange:=nil;
-  FreeAndNil(FItems);
+  FreeThenNil(FItems);
   inherited Destroy;
 end;
 

@@ -1,8 +1,22 @@
-
 {------------------------------------------------------------------------------
-
-  Miguel A. Risco Castillo TuELED v0.2
+  TuELED v1.0 2015-05-15
+  Author:Miguel A. Risco-Castillo
   http://ue.accesus.com/uecontrols
+
+  Properties:
+  Active:boolean, for On/Off the LED
+  Bright:boolean, enable/disable halo (for improve performance)
+  Color:TColor, actual color of the LED, automatic darken color for off state
+  LedType:ledRound/ledSquare, shape of the LED
+  Reflection:boolean, enable 3D/flat effect (for improve performance)
+
+  This software may not be included into library collections and similar compilations
+  which are sold. If you want to distribute this code for money then contact me
+  first and ask for my permission.
+
+  These copyright notices in the source code may not be removed or modified.
+  If you modify and/or distribute the code to any third party then you must not
+  veil the original author. It must always be clearly identifiable.
 
   The contents of this file are subject to the Mozilla Public License
   Version 1.1 (the "License"); you may not use this file except in compliance
@@ -23,51 +37,59 @@ interface
 
 uses
   Classes, SysUtils, LResources, Forms, Controls, Graphics, Dialogs,
-  LCLIntf, LCLType, Types, BGRABitmap, BGRABitmapTypes;
+  LCLIntf, LCLType, Types, BGRABitmap, BGRABitmapTypes, uEBase;
 
 type
 
-  { TuELED }
   TLedType = (ledRound, ledSquare);
 
-  TuELED = class(TGraphicControl)
+{ TuELED }
+  TCustomuELED = class(TuEBaseControl)
   private
-    FColor: TColor;
     FActive: Boolean;
-    FOnChange: TNotifyEvent;
-    FChanging:Boolean;
+    FColor: TColor;
     FBright : Boolean;
     FReflection : Boolean;
     FLedType : TLedType;
-    procedure DrawLED;
+    FOnChange: TNotifyEvent;
+    FChanging:Boolean;
     procedure DrawLedRound(const r: integer; const LColor: TColor);
     procedure DrawLedSquare(const r: integer; const LColor: TColor);
     procedure SetActive(AValue:Boolean);
   protected
     class procedure WSRegisterClass; override;
     class function GetControlClassDefaultSize: TSize; override;
-    procedure Paint; override;
     procedure Loaded; override;
     procedure Resize; override;
     procedure SetColor(AValue: TColor); override;
     procedure SetBright(Avalue:Boolean); virtual;
     procedure SetReflection(Avalue:Boolean); virtual;
     procedure SetLedType(AValue:TLedType); virtual;
+//    procedure DrawControl; override;
+    procedure RenderControl; override;
     procedure DoChange; virtual;
-  public
-    Bitmap: TBGRABitmap;
-    constructor Create(AOwner: TComponent); override;
-    destructor Destroy; override;
-    procedure ReDraw;
-  published
     property Active: boolean read FActive write SetActive;
     property LedType: TLedType read FLedType write SetLedType;
     property Bright: boolean read FBright write SetBright;
     property Reflection: boolean read FReflection write SetReflection;
+    property Color: tcolor read FColor write SetColor default clDefault;
+    property OnChange: TNotifyEvent read FOnChange write FOnChange;
+  public
+    constructor Create(AOwner: TComponent); override;
+  end;
+
+  TuELED = class(TCustomuELED)
+  published
+    property About;
+    property Debug;
+    property Active;
+    property LedType;
+    property Bright;
+    property Reflection;
     property Align;
     property Anchors;
     property BorderSpacing;
-    property Color: tcolor read FColor write SetColor default clDefault;
+    property Color;
     property Constraints;
     property DragCursor;
     property DragKind;
@@ -78,7 +100,7 @@ type
     property PopupMenu;
     property ShowHint;
     property Visible;
-    property OnChange: TNotifyEvent read FOnChange write FOnChange;
+    property OnChange;
     property OnChangeBounds;
     property OnMouseEnter;
     property OnMouseLeave;
@@ -101,16 +123,16 @@ type
     property OnStartDrag;
   end;
 
+
 procedure Register;
 function Darker(Color:TColor; Percent:Byte):TBGRAPixel;
 
 implementation
 
-constructor TuELED.Create(AOwner: TComponent);
+constructor TCustomuELED.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
   ControlStyle := ControlStyle + [csReplicatable, csCaptureMouse, csClickEvents, csDoubleClicks];
-  Bitmap:=TBGRABitmap.Create(0,0);
   with GetControlClassDefaultSize do SetInitialBounds(0, 0, CX, CY);
   FChanging:=false;
   FActive:=true;
@@ -120,110 +142,82 @@ begin
   FLedType:=ledRound;
 end;
 
-destructor TuELED.Destroy;
-begin
-  if Assigned(Bitmap) then
-  begin
-    Bitmap.Free;
-    Bitmap := nil;
-  end;
-  inherited Destroy;
-end;
+//procedure TCustomuELED.DrawControl;
+//begin
+//  if assigned(Bitmap) then
+//  begin
+//    Bitmap.Draw(inherited Canvas,0,0,false);
+//  end;
+//  inherited DrawControl;
+//end;
 
-procedure TuELED.ReDraw;
-begin
-  Paint;
-end;
-
-procedure TuELED.Paint;
-
-  procedure DrawFrame;
-  begin
-    with inherited Canvas do
-    begin
-      Pen.Color := clBlack;
-      Pen.Style := psDash;
-      MoveTo(0, 0);
-      LineTo(Self.Width-1, 0);
-      LineTo(Self.Width-1, Self.Height-1);
-      LineTo(0, Self.Height-1);
-      LineTo(0, 0);
-    end;
-  end;
-
-begin
-  if csDesigning in ComponentState then DrawFrame;
-  if assigned(Bitmap) then
-  begin
-    Bitmap.Draw(inherited Canvas,0,0,false);
-  end;
-end;
-
-procedure TuELED.Loaded;
+procedure TCustomuELED.Loaded;
 begin
   inherited Loaded;
 end;
 
-procedure TuELED.Resize;
+procedure TCustomuELED.Resize;
 begin
   inherited Resize;
-  DrawLED;
+  RenderControl;
+  Invalidate;
+  DoChange;
 end;
 
-procedure TuELED.SetColor(AValue: TColor);
+procedure TCustomuELED.SetColor(AValue: TColor);
 begin
   if FColor = AValue then exit;
   FColor := AValue;
-  DrawLED;
+  RenderControl;
   inherited SetColor(AValue);
+  Invalidate;
+  DoChange;
 end;
 
-procedure TuELED.SetBright(Avalue: Boolean);
+procedure TCustomuELED.SetBright(Avalue: Boolean);
 begin
   if FBright = AValue then exit;
   FBright := AValue;
-  DrawLED;
+  RenderControl;
+  Invalidate;
+  DoChange;
 end;
 
-procedure TuELED.SetReflection(Avalue: Boolean);
+procedure TCustomuELED.SetReflection(Avalue: Boolean);
 begin
   if FReflection = AValue then exit;
   FReflection := AValue;
-  DrawLED;
+  RenderControl;
+  Invalidate;
+  DoChange;
 end;
 
-procedure TuELED.SetLedType(AValue: TLedType);
+procedure TCustomuELED.SetLedType(AValue: TLedType);
 begin
   if FLedType = AValue then exit;
   FLedType := AValue;
-  DrawLED;
+  RenderControl;
+  Invalidate;
+  DoChange;
 end;
 
 
-procedure TuELED.DrawLED;
+procedure TCustomuELED.RenderControl;
 var r:integer;
 begin
-  if (csLoading in ComponentState) or FChanging then exit;
-
-  FChanging := True;
   Bitmap.SetSize(width,height);
   Bitmap.Fill(BGRAPixelTransparent);
-
   if Width < Height then r:=Width else r:=Height;
   r:=r div 10;
-
   Case FLedType of
     ledSquare : DrawLedSquare(r+2, FColor);
   else
     DrawLedRound(r+3, FColor)
   end;
-
-  FChanging := False;
-  Invalidate;
-  DoChange;
+  inherited RenderControl;
 end;
 
-procedure TuELED.DrawLedRound(const r: integer; const LColor: TColor);
+procedure TCustomuELED.DrawLedRound(const r: integer; const LColor: TColor);
 var
   mask: TBGRABitmap;
   layer: TBGRABitmap;
@@ -273,7 +267,7 @@ begin
   end;
 end;
 
-procedure TuELED.DrawLedSquare(const r: integer; const LColor: TColor);
+procedure TCustomuELED.DrawLedSquare(const r: integer; const LColor: TColor);
 var
   mask: TBGRABitmap;
   layer: TBGRABitmap;
@@ -300,7 +294,7 @@ begin
                        gtRadial,PointF(layer.Width/2,layer.Height/2),PointF(layer.Width*1.5,layer.Height*1.5),
                        dmSet);
     mask := TBGRABitmap.Create(layer.Width,layer.Height,BGRABlack);
-    mask.FillRoundRectAntialias(0,0,layer.Width,layer.Height,r,r,BGRAWhite);
+    mask.FillRoundRectAntialias(0,0,layer.Width,layer.Height,r/2,r/2,BGRAWhite);
     layer.ApplyMask(mask);
     mask.Free;
     Bitmap.PutImage(r,r,layer,dmDrawWithTransparency);
@@ -325,27 +319,29 @@ begin
 
 end;
 
-procedure TuELED.SetActive(AValue: Boolean);
+procedure TCustomuELED.SetActive(AValue: Boolean);
 begin
   if AValue <> FActive then
   begin
     FActive := AValue;
-    DrawLED;
+    RenderControl;
+    Invalidate;
+    DoChange;
   end;
 end;
 
-class function TuELED.GetControlClassDefaultSize: TSize;
+class function TCustomuELED.GetControlClassDefaultSize: TSize;
 begin
   Result.CX := 24;
   Result.CY := 24;
 end;
 
-procedure TuELED.DoChange;
+procedure TCustomuELED.DoChange;
 begin
   if Assigned(FOnChange) then FOnChange(Self);
 end;
 
-class procedure TuELED.WSRegisterClass;
+class procedure TCustomuELED.WSRegisterClass;
 begin
   inherited WSRegisterClass;
 end;
@@ -368,4 +364,5 @@ begin
 end;
 
 end.
+
 

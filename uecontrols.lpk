@@ -2,6 +2,7 @@
 <CONFIG>
   <Package Version="4">
     <Name Value="uEControls"/>
+    <Type Value="RunAndDesignTime"/>
     <AddToProjectUsesSection Value="True"/>
     <Author Value="Miguel A. Risco Castillo"/>
     <CompilerOptions>
@@ -19,9 +20,6 @@
           <GenerateDebugInfo Value="False"/>
         </Debugging>
       </Linking>
-      <Other>
-        <CompilerPath Value="$(CompPath)"/>
-      </Other>
     </CompilerOptions>
     <Description Value="Set of instrumentation controls for Lazarus IDE"/>
     <License Value="  The contents of this file are subject to the Mozilla Public License
@@ -32,35 +30,58 @@
   Software distributed under the License is distributed on an &quot;AS IS&quot; basis,
   WITHOUT WARRANTY OF ANY KIND, either expressed or implied. See the License for
   the specific language governing rights and limitations under the License."/>
-    <Version Minor="5" Release="14" Build="253"/>
-    <Files Count="5">
+    <Version Major="6" Release="2" Build="263"/>
+    <Files Count="10">
       <Item1>
+        <Filename Value="uebase.pas"/>
+        <UnitName Value="uEBase"/>
+      </Item1>
+      <Item2>
         <Filename Value="uerotimage.pas"/>
         <HasRegisterProc Value="True"/>
         <UnitName Value="uERotImage"/>
-      </Item1>
-      <Item2>
+      </Item2>
+      <Item3>
         <Filename Value="ueled.pas"/>
         <HasRegisterProc Value="True"/>
         <UnitName Value="ueled"/>
-      </Item2>
-      <Item3>
+      </Item3>
+      <Item4>
+        <Filename Value="uetileimage.pas"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="uETileImage"/>
+      </Item4>
+      <Item5>
+        <Filename Value="uetilepanel.pas"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="uETilePanel"/>
+      </Item5>
+      <Item6>
         <Filename Value="ueknob.pas"/>
         <HasRegisterProc Value="True"/>
         <UnitName Value="uEKnob"/>
-      </Item3>
-      <Item4>
+      </Item6>
+      <Item7>
         <Filename Value="ueselector.pas"/>
         <HasRegisterProc Value="True"/>
         <UnitName Value="uESelector"/>
-      </Item4>
-      <Item5>
+      </Item7>
+      <Item8>
         <Filename Value="uemultiturn.pas"/>
         <HasRegisterProc Value="True"/>
         <UnitName Value="uEMultiTurn"/>
-      </Item5>
+      </Item8>
+      <Item9>
+        <Filename Value="uegauge.pas"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="uEGauge"/>
+      </Item9>
+      <Item10>
+        <Filename Value="uebutton.pas"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="uebutton"/>
+      </Item10>
     </Files>
-    <Type Value="RunAndDesignTime"/>
     <RequiredPkgs Count="3">
       <Item1>
         <PackageName Value="BGRABitmapPack"/>

@@ -1,11 +1,18 @@
-
 {------------------------------------------------------------------------------
-
-  Miguel A. Risco Castillo TuERotImage v0.6.3
+  TuERotImage v1.0  2015-05-17
+  Author: Miguel A. Risco-Castillo
   http://ue.accesus.com/uecontrols
 
   using some ideas from:
   TRotateImage v1.54 by Kambiz R. Khojasteh
+
+  This software may not be included into library collections and similar compilations
+  which are sold. If you want to distribute this code for money then contact me
+  first and ask for my permission.
+
+  These copyright notices in the source code may not be removed or modified.
+  If you modify and/or distribute the code to any third party then you must not
+  veil the original author. It must always be clearly identifiable.
 
   The contents of this file are subject to the Mozilla Public License
   Version 1.1 (the "License"); you may not use this file except in compliance
@@ -26,19 +33,18 @@ interface
 
 uses
   Classes, SysUtils, LResources, Forms, Controls, Graphics, Dialogs,
-  Types, BGRABitmap, BGRABitmapTypes;
+  Types, BGRABitmap, BGRABitmapTypes,uEBase;
 
 type
 
-  { TuECustomRotImage }
-
   { TCustomuERotImage }
 
-  TCustomuERotImage = class(TGraphicControl)
+  TCustomuERotImage = class(TuEBaseControl)
   private
     FColor: TColor;
+    FImage: TBitmap;
+    FOnImageChanged: TNotifyEvent;
     FPicture: TPicture;
-    FOnPictureChanged: TNotifyEvent;
     FStretch: Boolean;
     FCenter: Boolean;
     FTransparent: Boolean;
@@ -46,14 +52,12 @@ type
     FAngle: Extended;
     FUniqueSize: Boolean;
     FMaxSize: Integer;
-    FChanging: Boolean;
     FOnRotation: TNotifyEvent;
     FBeforeRotation: TNotifyEvent;
     function GetCanvas: TCanvas;
-    procedure RotateImage(AValue: Extended);
-    procedure ForceRotate(AValue: Extended);
+    procedure RenderRotation;
     procedure SetCenter(const AValue: Boolean);
-    procedure SetPicture(const AValue: TPicture);
+    procedure SetImage(const AValue: TBitmap);
     procedure SetStretch(const AValue: Boolean);
     procedure SetProportional(const AValue: Boolean);
     procedure SetTransparent(const AValue: Boolean);
@@ -61,38 +65,39 @@ type
     procedure SetUniqueSize(Value: Boolean);
   protected
     class procedure WSRegisterClass; override;
-    procedure PictureChanged(Sender : TObject); virtual;
+    procedure ImageChanged(Sender : TObject); virtual;
+    procedure DeprecatedPictureChanged(Sender:TObject);
     procedure CalculatePreferredSize(var PreferredWidth,
                                      PreferredHeight: integer;
                                      WithThemeSpace: Boolean); override;
     class function GetControlClassDefaultSize: TSize; override;
     function CanAutoSize(var NewWidth, NewHeight: Integer): Boolean; override;
-    procedure Paint; override;
-    procedure Loaded; override;
-    procedure Resize; override;
+    function DestRect: TRect; override;
+    procedure RenderControl; override;
     procedure SetColor(AValue: TColor); override;
     procedure DoRotation; virtual;
     procedure DoBeforeRotation; virtual;
-    function DestRect: TRect; virtual;
+    procedure SetPicture(AValue: TPicture);
     property Canvas: TCanvas read GetCanvas;
     property MaxSize: Integer read FMaxSize;
     property Angle: Extended read FAngle write SetAngle;
     property BorderSpacing;
     property Center: Boolean read FCenter write SetCenter default False;
     property Color: tcolor read FColor write SetColor default clDefault;
-    property Picture: TPicture read FPicture write SetPicture;
+    property Image: TBitmap read FImage write SetImage;
     property Proportional: Boolean read FProportional write setProportional default False;
     property Stretch: Boolean read FStretch write SetStretch default False;
-    property Transparent: Boolean read FTransparent write SetTransparent;
+    property Transparent: Boolean read FTransparent write SetTransparent default true;
     property UniqueSize: Boolean read FUniqueSize write SetUniqueSize default False;
-    property OnPictureChanged: TNotifyEvent read FOnPictureChanged write FOnPictureChanged;
+    property OnImageChanged: TNotifyEvent read FOnImageChanged write FOnImageChanged;
     property OnRotation: TNotifyEvent read FOnRotation write FOnRotation;
     property BeforeRotation: TNotifyEvent read FBeforeRotation write FBeforeRotation;
+    property Picture:TPicture read FPicture write SetPicture;
   public
-    Bitmap: TBGRABitmap;
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-    procedure ReDraw;
+    function LoadFromFile(f:string):boolean; virtual;
+    procedure ForceRotate(AValue: Extended);
   end;
 
 
@@ -100,6 +105,10 @@ type
 
   TuERotImage = class(TCustomuERotImage)
   published
+    property About;
+    property Debug;
+//  This property is deprecated, use Image and LoadfromFile
+    property Picture;
     property Align;
     property Anchors;
     property Angle;
@@ -115,7 +124,7 @@ type
     property MaxSize;
     property ParentColor;
     property ParentShowHint;
-    property Picture;
+    property Image;
     property PopupMenu;
     property Proportional;
     property ShowHint;
@@ -130,7 +139,7 @@ type
     property OnMouseWheelDown;
     property OnMouseWheelUp;
     property OnPaint;
-    property OnPictureChanged;
+    property OnImageChanged;
     property OnClick;
     property OnConstrainedResize;
     property OnDblClick;
@@ -153,7 +162,9 @@ procedure Register;
 
 implementation
 
-//uses Math;
+uses LCLProc;
+
+const DefaultSize=90;
 
 constructor TCustomuERotImage.Create(AOwner: TComponent);
 begin
@@ -165,74 +176,89 @@ begin
   FStretch := False;
   FTransparent := True;
   FUniqueSize := False;
-  with GetControlClassDefaultSize do
-  begin
-    SetInitialBounds(0, 0, CX, CY);
-    FPicture := TPicture.Create;
-    FPicture.Bitmap.SetSize(0,0);
-    FPicture.OnChange := @PictureChanged;
-    Bitmap:=TBGRABitmap.Create(CX,CY);
-  end;
+  FImage := TBitmap.Create;
+  FImage.Clear; //  FImage.SetSize(DefaultSize,DefaultSize);
+  FImage.OnChange := @ImageChanged;
+  with GetControlClassDefaultSize do SetInitialBounds(0, 0, CX, CY);
+  //Deprecated:
+  FPicture := TPicture.Create;
+  FPicture.OnChange:=@DeprecatedPictureChanged;
 end;
 
 destructor TCustomuERotImage.Destroy;
 begin
-  if Assigned(Bitmap) then
-  begin
-    Bitmap.Free;
-    Bitmap := nil;
-  end;
-  FPicture.OnChange := nil;
-  FPicture.Graphic := nil;
-  FPicture.Free;
+  FImage.OnChange := nil;
+  FreeThenNil(FImage);
+  //Deprecated:
+  FPicture.OnChange:=nil;
+  FreeThenNil(FPicture);
   inherited Destroy;
 end;
 
-procedure TCustomuERotImage.ReDraw;
+function TCustomuERotImage.LoadFromFile(f: string): boolean;
 begin
-  ForceRotate(FAngle);
-  Paint;
+  result:=false;
+  try
+    Bitmap.LoadFromFile(f);
+  except
+    exit;
+  end;
+  FImage.Assign(Bitmap);
+  result:=true;
 end;
 
-procedure TCustomuERotImage.Paint;
+procedure TCustomuERotImage.RenderControl;
+begin
+  if (csLoading in ComponentState) or (csCreating in FControlState) or IsUpdating then Exit;
+  RenderRotation;
+  inherited RenderControl;
+end;
 
-  procedure DrawFrame;
+procedure TCustomuERotImage.RenderRotation;
+var xc,yc,w,h:real;
+  rad,s,c:Extended;
+  tbmp:TBGRABitmap;
+  fillc:TBGRAPixel;
+begin
+
+//ShowMessage('RenderRotation '+Self.GetNamePath);
+
+  If FTransparent then Fillc:=BGRAPixelTransparent else Fillc:=ColortoBGRA(ColortoRGB(color));
+  if not FImage.Empty then
   begin
-    with inherited Canvas do
+    if UniqueSize then
+      tbmp:=TBGRABitmap.Create(MaxSize,MaxSize,Fillc)
+    else
     begin
-      Pen.Color := clBlack;
-      Pen.Style := psDash;
-      MoveTo(0, 0);
-      LineTo(Self.Width-1, 0);
-      LineTo(Self.Width-1, Self.Height-1);
-      LineTo(0, Self.Height-1);
-      LineTo(0, 0);
+      rad:=FAngle*PI/180;
+      s:=abs(sin(rad));
+      c:=abs(cos(rad));
+      w:= FImage.width*c + FImage.height*s;
+      h:= FImage.width*s + FImage.height*c;
+      tbmp:=TBGRABitmap.Create(Round(w),Round(h),Fillc);
     end;
-  end;
-
-var R:TRect;
-
-begin
-  if csDesigning in ComponentState then DrawFrame;
-  if assigned(Bitmap) then
+    xc:=FImage.width/2;
+    yc:=FImage.height/2;
+    Bitmap.SetSize(1,1);
+    Bitmap.Fill(Fillc);
+    Bitmap.Assign(FImage);
+  end else if width>0 then
   begin
-    R:=DestRect;
-    Bitmap.Draw(Canvas,R,false);
-  end;
+    xc:=width/2;
+    yc:=height/2;
+    tbmp:=TBGRABitmap.Create(width,height,Fillc);
+    Bitmap.SetSize(width,height);
+    Bitmap.Fill(Fillc);
+  end else exit;
+  w:=(tbmp.Width)/2;
+  h:=(tbmp.Height)/2;
+  DoBeforeRotation;
+  tbmp.PutImageAngle(w-1,h-1,Bitmap,FAngle,xc-0.5,yc-0.5,255);
+  Bitmap.Assign(tbmp);
+  tbmp.free;
+  DoRotation;
 end;
 
-procedure TCustomuERotImage.Loaded;
-begin
-  inherited Loaded;
-  PictureChanged(Self);
-end;
-
-
-procedure TCustomuERotImage.Resize;
-begin
-  inherited Resize;
-  RotateImage(FAngle);
-end;
 
 function TCustomuERotImage.GetCanvas: TCanvas;
 begin
@@ -246,10 +272,16 @@ begin
   invalidate;
 end;
 
-procedure TCustomuERotImage.SetPicture(const AValue: TPicture);
+procedure TCustomuERotImage.SetImage(const AValue: TBitmap);
 begin
-  if FPicture=AValue then exit;
-  FPicture.Assign(AValue);
+  if (FImage <> nil) and (FImage=AValue) then exit;
+  FImage.Assign(AValue);
+end;
+
+procedure TCustomuERotImage.SetPicture(AValue: TPicture);
+begin
+  if FPicture=AValue then Exit;
+  FPicture:=AValue;
 end;
 
 procedure TCustomuERotImage.SetStretch(const AValue: Boolean);
@@ -270,73 +302,24 @@ procedure TCustomuERotImage.SetTransparent(const AValue: Boolean);
 begin
   if FTransparent = AValue then exit;
   FTransparent := AValue;
-  ForceRotate(FAngle);
+  RenderControl;
+  invalidate;
 end;
 
 procedure TCustomuERotImage.SetColor(AValue: TColor);
 begin
   if FColor = AValue then exit;
   FColor := AValue;
-  ForceRotate(FAngle);
+  RenderControl;
   inherited SetColor(AValue);
+  invalidate;
 end;
 
 procedure TCustomuERotImage.ForceRotate(AValue: Extended);
-var xc,yc:real;
-  w,h:integer;
-  rad,s,c:Extended;
-  tbmp:TBGRABitmap;
-  fillc:TBGRAPixel;
 begin
-  if (csLoading in ComponentState) or FChanging then exit;
-  FChanging := True;
-  rad:=AValue*PI/180;
-  s:=abs(sin(rad));
-  c:=abs(cos(rad));
-  If FTransparent then Fillc:=BGRAPixelTransparent else Fillc:=ColortoBGRA(ColortoRGB(color));
-  if FPicture.Bitmap.Width>0 then
-  begin
-    xc:=(FPicture.Bitmap.width-1)/2;
-    yc:=(FPicture.Bitmap.height-1)/2;
-    w:= round(FPicture.Bitmap.width*c + FPicture.Bitmap.height*s);
-    h:= round(FPicture.Bitmap.width*s + FPicture.Bitmap.height*c);
-    if UniqueSize then tbmp:=TBGRABitmap.Create(MaxSize,MaxSize,Fillc)
-    else tbmp:=TBGRABitmap.Create(w,h,Fillc);
-    Bitmap.SetSize(1,1);
-    Bitmap.Fill(Fillc);
-    Bitmap.Assign(FPicture.Bitmap);
-  end else
-  begin
-    xc:=(width-1)/2;
-    yc:=(height-1)/2;
-    tbmp:=TBGRABitmap.Create(width,height,Fillc);
-    Bitmap.SetSize(width,height);
-    Bitmap.Fill(Fillc);
-  end;
-  w:=Round((tbmp.Width)/2-1);
-  h:=Round((tbmp.Height)/2-1);
-  DoBeforeRotation;
-  tbmp.PutImageAngle(w,h,Bitmap,AValue,xc,yc);
-  Bitmap.Assign(tbmp);
-  tbmp.free;
-  try
-    if AutoSize and (MaxSize <> 0) then
-    begin
-      InvalidatePreferredSize;
-      AdjustSize;
-      if UniqueSize then SetBounds(Left, Top, MaxSize, MaxSize)
-      else SetBounds(Left, Top, Bitmap.Width, Bitmap.Height);
-    end;
-  finally
-    FChanging := False;
-  end;
+  FAngle:=AValue;
+  RenderRotation;
   Invalidate;
-  DoRotation;
-end;
-
-procedure TCustomuERotImage.RotateImage(AValue:Extended);
-begin
-  if AValue <> FAngle then ForceRotate(FAngle);
 end;
 
 procedure TCustomuERotImage.SetAngle(const Value: Extended);
@@ -344,7 +327,8 @@ begin
   if Value <> FAngle then
   begin
     FAngle := Value;
-    ForceRotate(FAngle);
+    RenderControl;
+    invalidate;
   end;
 end;
 
@@ -353,25 +337,29 @@ begin
   if Value <> UniqueSize then
   begin
     FUniqueSize := Value;
-    ForceRotate(FAngle);
+    RenderControl;
+    invalidate;
   end;
 end;
 
-procedure TCustomuERotImage.PictureChanged(Sender: TObject);
+procedure TCustomuERotImage.ImageChanged(Sender: TObject);
 begin
-  if not (csLoading in ComponentState) then
+
+//ShowMessage('ImageChanged '+Self.GetNamePath);
+
+  FMaxSize := Round(Sqrt(Sqr(FImage.Width) + Sqr(FImage.Height)));
+  RenderControl;
+  if Assigned(OnImageChanged) then OnImageChanged(Self);
+  invalidate;
+end;
+
+procedure TCustomuERotImage.DeprecatedPictureChanged(Sender: TObject);
+begin
+  if assigned(FPicture.Bitmap) and (FPicture.Bitmap.Width>0) then
   begin
-    if FPicture.Bitmap.width>0 then
-    begin
-      if (FPicture.Graphic.MimeType='') and (csDesigning in ComponentState) then
-      begin
-        showmessage('Bug: unsupported Picture format at design time');
-        FPicture.Bitmap.SetSize(0,0);
-        FMaxSize := 0;
-      end else FMaxSize := Round(Sqrt(Sqr(FPicture.Graphic.Width) + Sqr(FPicture.Graphic.Height)));
-    end else FMaxSize := Round(Sqrt(Sqr(Width) + Sqr(Height)));
-    ForceRotate(FAngle);
-    if Assigned(OnPictureChanged) then OnPictureChanged(Self);
+    Image.Assign(FPicture.Bitmap);
+    ShowMessage('The property "Picture" is deprecated, use Image');
+    FPicture.Clear;
   end;
 end;
 
@@ -384,8 +372,8 @@ end;
 
 class function TCustomuERotImage.GetControlClassDefaultSize: TSize;
 begin
-  Result.CX := 90;
-  Result.CY := 90;
+  Result.CX := DefaultSize;
+  Result.CY := DefaultSize;
 end;
 
 function TCustomuERotImage.CanAutoSize(var NewWidth, NewHeight: Integer): Boolean;
@@ -427,8 +415,8 @@ var
   PicHeight: Integer;
   ImgWidth: Integer;
   ImgHeight: Integer;
-  w: Integer;
-  h: Integer;
+  w: extended;
+  h: extended;
 begin
   if not Assigned(Bitmap) then exit;
   PicWidth := Bitmap.Width;
@@ -440,14 +428,14 @@ begin
     if Proportional and (PicWidth > 0) and (PicHeight > 0) then
     begin
       w:=ImgWidth;
-      h:=(PicHeight*w) div PicWidth;
+      h:=(PicHeight*w)/PicWidth;
       if h>ImgHeight then
       begin
         h:=ImgHeight;
-        w:=(PicWidth*h) div PicHeight;
+        w:=(PicWidth*h)/PicHeight;
       end;
-      PicWidth:=w;
-      PicHeight:=h;
+      PicWidth:=round(w);
+      PicHeight:=round(h);
     end
     else begin
       PicWidth := ImgWidth;
@@ -456,11 +444,13 @@ begin
   end;
   Result:=Rect(0,0,PicWidth,PicHeight);
   if Center then
-{$IFDEF WINDOWS}
-    OffsetRect(Result,(ImgWidth-PicWidth) div 2,(ImgHeight-PicHeight) div 2);
-{$ELSE}
-    OffsetRect(Result,-(ImgWidth-PicWidth) div 2,-(ImgHeight-PicHeight) div 2);
-{$ENDIF}
+  OffsetRect(Result,Round((ImgWidth-PicWidth+2)/2),Round((ImgHeight-PicHeight+2)/2));
+
+//{$IFDEF WINDOWS}
+//    OffsetRect(Result,Round((ImgWidth-PicWidth)/2),Round((ImgHeight-PicHeight)/2));
+//{$ELSE}
+//    OffsetRect(Result,-Round((ImgWidth-PicWidth)/2),-Round((ImgHeight-PicHeight)/2));
+//{$ENDIF}
 end;
 
 procedure Register;
