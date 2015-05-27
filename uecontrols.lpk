@@ -30,7 +30,7 @@
   Software distributed under the License is distributed on an &quot;AS IS&quot; basis,
   WITHOUT WARRANTY OF ANY KIND, either expressed or implied. See the License for
   the specific language governing rights and limitations under the License."/>
-    <Version Major="6" Release="2" Build="263"/>
+    <Version Major="6" Release="2" Build="264"/>
     <Files Count="10">
       <Item1>
         <Filename Value="uebase.pas"/>
