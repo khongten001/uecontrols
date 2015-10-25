@@ -10,23 +10,18 @@
   LedType:ledRound/ledSquare, shape of the LED
   Reflection:boolean, enable 3D/flat effect (for improve performance)
 
-  This software may not be included into library collections and similar compilations
-  which are sold. If you want to distribute this code for money then contact me
-  first and ask for my permission.
+  THE COPYRIGHT NOTICES IN THE SOURCE CODE MAY NOT BE REMOVED OR MODIFIED.
+  IF YOU MODIFY AND/OR DISTRIBUTE THE CODE TO ANY THIRD PARTY THEN YOU MUST NOT
+  VEIL THE ORIGINAL AUTHOR. IT MUST ALWAYS BE CLEARLY IDENTIFIABLE.
 
-  These copyright notices in the source code may not be removed or modified.
-  If you modify and/or distribute the code to any third party then you must not
-  veil the original author. It must always be clearly identifiable.
+  The contents of this file are subject in priority to the License in this header,
+  in the license.txt file and the Mozilla Public License Version 1.1 (MPL);
+  you may not use this file except in compliance with these licenses. You may obtain
+  a copy of the MPL License at http://www.mozilla.org/MPL/MPL-1.1.html
 
-  The contents of this file are subject to the Mozilla Public License
-  Version 1.1 (the "License"); you may not use this file except in compliance
-  with the License. You may obtain a copy of the License at
-  http://www.mozilla.org/MPL/MPL-1.1.html
-
-  Software distributed under the License is distributed on an "AS IS" basis,
-  WITHOUT WARRANTY OF ANY KIND, either expressed or implied. See the License for
-  the specific language governing rights and limitations under the License.
-
+  Software distributed under the Licenses is distributed on an "AS IS" basis,
+  WITHOUT WARRANTY OF ANY KIND, either expressed or implied. See the Licenses for
+  the specific language governing rights and limitations under the Licenses.
 ------------------------------------------------------------------------------}
 
 unit ueled;
@@ -80,7 +75,6 @@ type
 
   TuELED = class(TCustomuELED)
   published
-    property About;
     property Debug;
     property Active;
     property LedType;
@@ -123,10 +117,6 @@ type
     property OnStartDrag;
   end;
 
-
-procedure Register;
-function Darker(Color:TColor; Percent:Byte):TBGRAPixel;
-
 implementation
 
 constructor TCustomuELED.Create(AOwner: TComponent);
@@ -141,15 +131,6 @@ begin
   FColor:=clLime;
   FLedType:=ledRound;
 end;
-
-//procedure TCustomuELED.DrawControl;
-//begin
-//  if assigned(Bitmap) then
-//  begin
-//    Bitmap.Draw(inherited Canvas,0,0,false);
-//  end;
-//  inherited DrawControl;
-//end;
 
 procedure TCustomuELED.Loaded;
 begin
@@ -248,7 +229,7 @@ begin
     mask.Free;
     Bitmap.PutImage(r,r,layer,dmDrawWithTransparency);
     layer.free;
-  end else Bitmap.FillEllipseAntialias((Width-1)/2,(Height-1)/2,Width/2-r,Height/2-r, Darker(LColor,80));
+  end else Bitmap.FillEllipseAntialias((Width-1)/2,(Height-1)/2,Width/2-r,Height/2-r, Darken(LColor,80));
 
   //Reflexion
   if FReflection then
@@ -299,7 +280,7 @@ begin
     mask.Free;
     Bitmap.PutImage(r,r,layer,dmDrawWithTransparency);
     layer.free;
-  end else Bitmap.FillRoundRectAntialias(r,r,Width-r,Height-r,r,r, Darker(LColor,80));
+  end else Bitmap.FillRoundRectAntialias(r,r,Width-r,Height-r,r,r, Darken(LColor,80));
 
   //Reflexion
   if FReflection then
@@ -344,23 +325,6 @@ end;
 class procedure TCustomuELED.WSRegisterClass;
 begin
   inherited WSRegisterClass;
-end;
-
-function Darker(Color:TColor; Percent:Byte):TBGRAPixel;
-begin
-  Result:=ColorToBGRA(ColorToRGB(Color));
-  With Result do
-  begin
-    red:=red-muldiv(red,Percent,100);  //Percent% closer to black
-    green:=green-muldiv(green,Percent,100);
-    blue:=blue-muldiv(blue,Percent,100);
-  end;
-end;
-
-procedure Register;
-begin
-  {$I ueled_icon.lrs}
-  RegisterComponents('uEControls', [TuELED]);
 end;
 
 end.

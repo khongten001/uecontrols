@@ -6,23 +6,18 @@
   using some ideas from:
   TRotateImage v1.54 by Kambiz R. Khojasteh
 
-  This software may not be included into library collections and similar compilations
-  which are sold. If you want to distribute this code for money then contact me
-  first and ask for my permission.
+  THE COPYRIGHT NOTICES IN THE SOURCE CODE MAY NOT BE REMOVED OR MODIFIED.
+  IF YOU MODIFY AND/OR DISTRIBUTE THE CODE TO ANY THIRD PARTY THEN YOU MUST NOT
+  VEIL THE ORIGINAL AUTHOR. IT MUST ALWAYS BE CLEARLY IDENTIFIABLE.
 
-  These copyright notices in the source code may not be removed or modified.
-  If you modify and/or distribute the code to any third party then you must not
-  veil the original author. It must always be clearly identifiable.
+  The contents of this file are subject in priority to the License in this header,
+  in the license.txt file and the Mozilla Public License Version 1.1 (MPL);
+  you may not use this file except in compliance with these licenses. You may obtain
+  a copy of the MPL License at http://www.mozilla.org/MPL/MPL-1.1.html
 
-  The contents of this file are subject to the Mozilla Public License
-  Version 1.1 (the "License"); you may not use this file except in compliance
-  with the License. You may obtain a copy of the License at
-  http://www.mozilla.org/MPL/MPL-1.1.html
-
-  Software distributed under the License is distributed on an "AS IS" basis,
-  WITHOUT WARRANTY OF ANY KIND, either expressed or implied. See the License for
-  the specific language governing rights and limitations under the License.
-
+  Software distributed under the Licenses is distributed on an "AS IS" basis,
+  WITHOUT WARRANTY OF ANY KIND, either expressed or implied. See the Licenses for
+  the specific language governing rights and limitations under the Licenses.
 ------------------------------------------------------------------------------}
 
 unit uERotImage;
@@ -105,7 +100,6 @@ type
 
   TuERotImage = class(TCustomuERotImage)
   published
-    property About;
     property Debug;
 //  This property is deprecated, use Image and LoadfromFile
     property Picture;
@@ -157,8 +151,6 @@ type
     property OnStartDrag;
   end;
 
-
-procedure Register;
 
 implementation
 
@@ -451,12 +443,6 @@ begin
 //{$ELSE}
 //    OffsetRect(Result,-Round((ImgWidth-PicWidth)/2),-Round((ImgHeight-PicHeight)/2));
 //{$ENDIF}
-end;
-
-procedure Register;
-begin
-  {$I uerotimage_icon.lrs}
-  RegisterComponents('uEControls',[TuERotImage]);
 end;
 
 

@@ -1,22 +1,34 @@
-(*
-uEButton v1.1 2015-05-23
-(c) Miguel A. Risco-Castillo
-This is an Alpha version
+{------------------------------------------------------------------------------
+  uEButton v1.1 2015-05-23
+  Author: Miguel A. Risco-Castillo
+  This is an Alpha version
 
-Forked from BCImageButton of BGRAControls, Author: Lainz.
+  Forked from BCImageButton of BGRAControls, Author: Lainz.
 
-What is new?:
-- support for load images from object inspector
-- can draw default images by it self
-- support for Glyphs
-- support for button layouts
-- shadow for text (use clNone for disable shadow)
-- redraw when properties (caption, font, etc.) are changed
+  What is new?:
+  - support for load images from object inspector
+  - can draw default images by it self
+  - support for Glyphs
+  - support for button layouts
+  - shadow for text (use clNone for disable shadow)
+  - redraw when properties (caption, font, etc.) are changed
 
-v1.1 20150523
-- remove ´&´from caption
+  v1.1 20150523
+  - remove ´&´from caption
 
-*)
+  THE COPYRIGHT NOTICES IN THE SOURCE CODE MAY NOT BE REMOVED OR MODIFIED.
+  IF YOU MODIFY AND/OR DISTRIBUTE THE CODE TO ANY THIRD PARTY THEN YOU MUST NOT
+  VEIL THE ORIGINAL AUTHOR. IT MUST ALWAYS BE CLEARLY IDENTIFIABLE.
+
+  The contents of this file are subject in priority to the License in this header,
+  in the license.txt file and the Mozilla Public License Version 1.1 (MPL);
+  you may not use this file except in compliance with these licenses. You may obtain
+  a copy of the MPL License at http://www.mozilla.org/MPL/MPL-1.1.html
+
+  Software distributed under the Licenses is distributed on an "AS IS" basis,
+  WITHOUT WARRANTY OF ANY KIND, either expressed or implied. See the Licenses for
+  the specific language governing rights and limitations under the Licenses.
+------------------------------------------------------------------------------}
 
 unit uebutton;
 
@@ -223,7 +235,6 @@ type
 
   TuEButton = class(TuECustomImageButton)
   published
-    property About;
     property Debug;
     property Image;
     property OnImageChanged;
@@ -275,6 +286,7 @@ type
     property TextVisible;
     //property Toggle;
     property Visible;
+    property About;// This property must not be removed to follow the licence statements
   end;
 
 { support functions }
@@ -283,8 +295,6 @@ type
   function CalculateAspectRatioW(W1, H1, H2: integer): integer; //result W2
   function CalculateDestRect(ImageW, ImageH, DestW, DestH: integer;
     Stretch, Proportional, Center: boolean): TRect;
-
-procedure Register;
 
 implementation
 
@@ -1327,12 +1337,6 @@ class function TuECustomImageButton.GetControlClassDefaultSize: TSize;
 begin
   Result.CX := 75;
   Result.CY := 30;
-end;
-
-procedure Register;
-begin
-  {$I uebutton_icon.lrs}
-  RegisterComponents('uEControls', [TuEButton]);
 end;
 
 end.
