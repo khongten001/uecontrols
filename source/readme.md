@@ -16,22 +16,35 @@ For use these controls you must first download the graphics library **BGRABitmap
 <http://sourceforge.net/projects/lazpaint/files/src/>  
 
 **Important:**  
-To install uEControls you must first remove **BGRAControls**, it have an old version of uEControls that conflicts with the new version. You will be able to reinstall BGRAControls by removing all ue*.pas files in the BGRAControls folder and references in its package. 
+  To install uEControls you must first remove **BGRAControls**, it have an old version
+  of uEControls that conflicts with the new version. You will be able to reinstall
+  BGRAControls by removing all ue*.pas files in the BGRAControls folder and references
+  in its package. 
  
-This software may not be included into library collections and similar compilations
-which are sold. If you want to distribute this code for money then contact me
-first and ask for my permission. 
- 
-These copyright notices in the source code may not be removed or modified.
-If you modify and/or distribute the code to any third party then you must not
-veil the original author. It must always be clearly identifiable. 
- 
-The contents of this file are subject to the Mozilla Public License
-Version 1.1 (the "License"); you may not use this file except in compliance
-with the License. You may obtain a copy of the License at 
-<http://www.mozilla.org/MPL/MPL-1.1.html> 
- 
-Software distributed under the License is distributed on an "AS IS" basis,
-WITHOUT WARRANTY OF ANY KIND, either expressed or implied. See the License for
-the specific language governing rights and limitations under the License. 
+**License:**
+  
+  This software may not be included into library collections and similar compilations
+  which are sold. If you want to distribute this code for money then contact me
+  first and ask for the permission of the author: Miguel A. Risco-Castillo
+  http://ue.accesus.com/uecontrols
+
+  FOR COMMERCIAL PURPOSES REQUEST THE APPROPRIATE LICENSE FROM THE AUTHOR.
+
+  THE COPYRIGHT NOTICES IN THE SOURCE CODE MAY NOT BE REMOVED OR MODIFIED.
+  IF YOU MODIFY AND/OR DISTRIBUTE THE CODE TO ANY THIRD PARTY THEN YOU MUST NOT
+  VEIL THE ORIGINAL AUTHOR. IT MUST ALWAYS BE CLEARLY IDENTIFIABLE.
+  
+  The above include the prohibition of to remove the about property of the controls,
+  which is only visible at design time. 
+
+  The contents of this file are subject in priority to the License in this header,
+  in the license.txt file and the Mozilla Public License Version 1.1 (MPL);
+  you may not use this file except in compliance with these licenses. You may obtain
+  a copy of the MPL License at http://www.mozilla.org/MPL/MPL-1.1.html
+  
+  All derivated work included forks must follow the statements in this license.
+
+  Software distributed under the Licenses is distributed on an "AS IS" basis,
+  WITHOUT WARRANTY OF ANY KIND, either expressed or implied. See the Licenses for
+  the specific language governing rights and limitations under the Licenses. 
 -----------------------------------------------------------------------------
