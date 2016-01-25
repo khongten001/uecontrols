@@ -1,5 +1,5 @@
 {-------------------------------------------------------------------------------------
-  TuETilePanel v1.0  2015-05-20
+  TuETilePanel v1.1  2016-01-24
   Author: Miguel A. Risco-Castillo
   http://ue.accesus.com/uecontrols
 
@@ -15,6 +15,11 @@
   Software distributed under the Licenses is distributed on an "AS IS" basis,
   WITHOUT WARRANTY OF ANY KIND, either expressed or implied. See the Licenses for
   the specific language governing rights and limitations under the Licenses.
+
+  v1.1 2016-01-24
+  - Add loadfromfile to support multiple image formats.
+
+  v1.0 2015-05-20
 -------------------------------------------------------------------------------------}
 unit uETilePanel;
 
@@ -43,6 +48,7 @@ type
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
+    function LoadFromFile(f:string):boolean;
   end;
 
   { TuETilePanel }
@@ -83,6 +89,20 @@ destructor TCustomuETilePanel.Destroy;
 begin
   FreeThenNil(FTile);
   inherited Destroy;
+end;
+
+function TCustomuETilePanel.LoadFromFile(f: string): boolean;
+var tp:TPicture;
+begin
+  result:=false;
+  tp:=TPicture.Create;
+  try
+    tp.LoadFromFile(f);
+    image.Assign(tp.Bitmap);
+  finally
+    tp.Free;
+  end;
+  result:=true;
 end;
 
 end.

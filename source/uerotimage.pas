@@ -245,6 +245,7 @@ begin
   w:=(tbmp.Width)/2;
   h:=(tbmp.Height)/2;
   DoBeforeRotation;
+  { TODO : Agregar Offset vertical y horizontal para preparar la base del uEGauge con centro inferior o en esquina: http://dotnetcharting.com/images/gauge_angles.png }
   tbmp.PutImageAngle(w-1,h-1,Bitmap,FAngle,xc-0.5,yc-0.5,255);
   Bitmap.Assign(tbmp);
   tbmp.free;

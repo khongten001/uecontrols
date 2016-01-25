@@ -1,5 +1,5 @@
 {------------------------------------------------------------------------------
-  uEButton v1.1 2015-05-23
+  uEButton v1.2 2016-01-24
   Author: Miguel A. Risco-Castillo
   This is an Alpha version
 
@@ -13,7 +13,11 @@
   - shadow for text (use clNone for disable shadow)
   - redraw when properties (caption, font, etc.) are changed
 
-  v1.1 20150523
+  v1.2 2016-01-24
+  - support for load multiple file formats to image and glyph
+  - Defaultimage must be explicitly called
+
+  v1.1 2015-05-23
   - remove ´&´from caption
 
   THE COPYRIGHT NOTICES IN THE SOURCE CODE MAY NOT BE REMOVED OR MODIFIED.
@@ -30,7 +34,7 @@
   the specific language governing rights and limitations under the Licenses.
 ------------------------------------------------------------------------------}
 
-unit uebutton;
+unit uEButton;
 
 {$mode objfpc}{$H+}
 
@@ -198,7 +202,7 @@ type
     procedure GlyphChanged(Sender : TObject); virtual;
     class function GetControlClassDefaultSize: TSize; override;
     procedure CMChanged(var Message: TLMessage); message CM_CHANGED; virtual;
-    procedure DefaultImage;
+    procedure DrawDefaultImage;
     procedure DoMouseDown; override;
     procedure DoMouseUp; override;
     procedure DoMouseEnter; override;
@@ -220,9 +224,13 @@ type
 
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
+    { Draw and use Default Image }
+    procedure DefaultImage;
     { It loads the 'BitmapFile' }
     procedure LoadFromBitmapFile;
     procedure Assign(Source: TPersistent); override;
+    procedure LoadGlyphFromFile(f: string);
+    procedure LoadImageFromFile(f: string);
     { Streaming }
     procedure SaveToFile(AFileName: string);
     procedure LoadFromFile(AFileName: string);virtual;
@@ -278,6 +286,7 @@ type
     property OnResize;
     property OnStartDrag;
     property ParentBidiMode;
+    property ParentColor;
     property ParentFont;
     property ParentShowHint;
     property PopupMenu;
@@ -821,7 +830,7 @@ procedure TuECustomImageButton.DrawControl;
 //var
 //  temp: TBGRABitmap;
 begin
-  if Color <> clDefault then
+  if (Color <> clDefault) and (Color <> clNone) then
   begin
     Canvas.Brush.Color := Color;
     Canvas.FillRect(0, 0, Width, Height);
@@ -972,15 +981,6 @@ begin
       FDestRect.Bottom, Debug);
     FBGRAMultiSliceScaling.Draw(3, FBGRADisabled, 0, 0, FDestRect.Right,
       FDestRect.Bottom, Debug);
-
-    if TextVisible then
-    begin
-      { Draw Text }
-      DrawGlyphnCaption(FBGRANormal);
-      DrawGlyphnCaption(FBGRAHover);
-      DrawGlyphnCaption(FBGRAActive);
-      DrawGlyphnCaption(FBGRADisabled);
-    end;
   end
   else
   begin
@@ -988,15 +988,18 @@ begin
     FDestRect := Rect(0, 0, Width, Height);
 
     { Draw default style in cache bitmaps }
-    FBGRANormal.Rectangle(0, 0, Width, Height, BGRABlack, BGRA(0, 0, 255),
+    FBGRANormal.Rectangle(0, 0, Width, Height, BGRABlack, BGRA(240, 240, 240, 64),
       dmSet);
-    FBGRAHover.Rectangle(0, 0, Width, Height, BGRABlack, BGRA(0, 255, 0),
+    FBGRAHover.Rectangle(0, 0, Width, Height, BGRA(128,192,255), BGRA(255, 255, 255, 64),
       dmSet);
-    FBGRAActive.Rectangle(0, 0, Width, Height, BGRABlack, BGRA(255, 0, 0),
+    FBGRAActive.Rectangle(0, 0, Width, Height, BGRAWhite, BGRA(192, 220, 255, 128),
       dmSet);
-    FBGRADisabled.Rectangle(0, 0, Width, Height, BGRABlack, BGRA(100, 100, 100),
+    FBGRADisabled.Rectangle(0, 0, Width, Height, BGRA(100,100,100), BGRA(192, 192, 192, 64),
       dmSet);
+  end;
 
+  if TextVisible then
+  begin
     { Draw Text }
     DrawGlyphnCaption(FBGRANormal);
     DrawGlyphnCaption(FBGRAHover);
@@ -1011,27 +1014,18 @@ begin
 end;
 
 procedure TuECustomImageButton.ImageChanged(Sender: TObject);
-var f:boolean=false;
 begin
+  if not Assigned(FImage) then exit;
   BeginUpdate;
-  if Assigned(FImage) then
-  begin
-    if FImage.Width=0 then
-    begin
-      DefaultImage;
-      f:=true;
-    end;
+  if (FImage.Width>0) then
     if BitmapOptions.Bitmap <> nil then
       BitmapOptions.Bitmap.assign(FImage)
     else
-      BitmapOptions.Bitmap := TBGRABitmap.Create(FImage);
-    if f then with BitmapOptions do
-    begin
-      FMarginBottom:=2;
-      FMarginLeft:=2;
-      FMarginRight:=2;
-      FMarginTop:=2;
-    end;
+      BitmapOptions.Bitmap := TBGRABitmap.Create(FImage)
+  else if BitmapOptions.Bitmap <> nil then
+  begin
+    BitmapOptions.Bitmap.Free;
+    BitmapOptions.Bitmap:=nil;
   end;
   EndUpdate;
   RenderControl;
@@ -1061,8 +1055,23 @@ begin
 end;
 
 procedure TuECustomImageButton.DefaultImage;
+begin
+  //------ Load default image ---------
+  DrawDefaultImage;
+  with BitmapOptions do
+  begin
+    FNumberOfItems:=4;
+    FDirection:=sdVertical;
+    FMarginBottom:=2;
+    FMarginLeft:=2;
+    FMarginRight:=2;
+    FMarginTop:=2;
+    FStretch:=true;
+  end;
+end;
+
+procedure TuECustomImageButton.DrawDefaultImage;
 var
-  TempBitmap: TBitmap;
   i,r,h,y:integer;
   c0,c1,c2,c3:TBGRAPixel;
 begin
@@ -1106,19 +1115,8 @@ begin
     Bitmap.RoundRect(0,y,r,y+h,8,8,c1);        //Mainframe
   end;
 
-  try
-    TempBitmap := TBitmap.Create;
-    With TempBitmap
-    do begin
-      PixelFormat:=pf32bit;
-      SetSize(r,h*4);
-      Canvas.Pixels[0,0]:=clblack;
-    end;
-    Bitmap.Draw(TempBitmap.Canvas,0,0);
-    Image.Assign(TempBitmap);
-  finally
-    TempBitmap.Free;
-  end;
+  AssignBGRAtoImage(Bitmap,Image);
+
 end;
 
 {$IFDEF DEBUG}
@@ -1221,7 +1219,7 @@ begin
   finally
     Exclude(FControlState, csCreating);
     EnableAutoSizing;
-    DefaultImage;
+    //DefaultImage;
     EndUpdate;
   end;
 end;
@@ -1281,6 +1279,24 @@ begin
   end
   else
     inherited Assign(Source);
+end;
+
+procedure TuECustomImageButton.LoadGlyphFromFile(f:string);
+var p:TPicture;
+begin
+  try
+    p:=TPicture.Create;
+    p.LoadFromFile(f);
+    Glyph.Assign(p.Bitmap);
+  finally
+    p.Free;
+  end;
+end;
+
+procedure TuECustomImageButton.LoadImageFromFile(f: string);
+begin
+  BitmapFile:=f;
+  LoadFromBitmapFile;
 end;
 
 procedure TuECustomImageButton.SaveToFile(AFileName: string);
